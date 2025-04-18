@@ -99,6 +99,7 @@
       justify-content: center;
       align-items: center;
       border-radius: 3px;
+      cursor: pointer;
     }
     .key.green {
       color: lime;
@@ -110,7 +111,7 @@
 </head>
 <body>
   <div class="phone">
-    <div class="screen">
+    <div class="screen" id="screen">
       <div class="header-bar">
         <div class="signal-bar">
           <div class="bar"></div>
@@ -121,7 +122,7 @@
         <span>ЧТВ 12:25</span>
       </div>
       <div class="menu" id="menu">
-        <div class="menu-item selected">Контакты</div>
+        <div class="menu-item selected">Телефонная книга</div>
         <div class="menu-item">Сообщения</div>
         <div class="menu-item">Органайзер</div>
         <div class="menu-item">Мультиплеер</div>
@@ -135,14 +136,14 @@
       </div>
     </div>
     <div class="keypad">
-      <div class="key green">📞<div>Принять</div></div>
-      <div class="key">2<br>ABC</div>
-      <div class="key red">❌<div>Отбой</div></div>
+      <div class="key green" id="key-enter">📞<div>Принять</div></div>
+      <div class="key" id="key-up">2<br>ABC</div>
+      <div class="key red" id="key-back">❌<div>Отбой</div></div>
       <div class="key">4<br>GHI</div>
       <div class="key">5<br>JKL</div>
       <div class="key">6<br>MNO</div>
       <div class="key">7<br>PQRS</div>
-      <div class="key">8<br>TUV</div>
+      <div class="key" id="key-down">8<br>TUV</div>
       <div class="key">9<br>WXYZ</div>
     </div>
   </div>
@@ -169,48 +170,66 @@
 
     function showSubmenu(section) {
       submenu.innerHTML = '';
-      submenuData[section].forEach(item => {
+      submenuData[section].forEach((item, i) => {
         const div = document.createElement('div');
         div.className = 'submenu-item';
         div.textContent = item;
+        div.addEventListener('click', () => alert(`Вызов: ${item}`));
         submenu.appendChild(div);
       });
     }
 
-    document.addEventListener('keydown', (e) => {
+    function navigateUp() {
       const items = inSubmenu ? submenu.querySelectorAll('.submenu-item') : mainMenu.querySelectorAll('.menu-item');
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+      updateSelection();
+    }
 
-      if (e.key === 'ArrowDown') {
-        currentIndex = (currentIndex + 1) % items.length;
+    function navigateDown() {
+      const items = inSubmenu ? submenu.querySelectorAll('.submenu-item') : mainMenu.querySelectorAll('.menu-item');
+      currentIndex = (currentIndex + 1) % items.length;
+      updateSelection();
+    }
+
+    function enterAction() {
+      const items = inSubmenu ? submenu.querySelectorAll('.submenu-item') : mainMenu.querySelectorAll('.menu-item');
+      const selectedText = items[currentIndex].textContent;
+      if (!inSubmenu && (selectedText === 'Сообщения' || selectedText === 'Чит-коды')) {
+        currentSection = selectedText;
+        showSubmenu(currentSection);
+        mainMenu.style.display = 'none';
+        submenu.style.display = 'flex';
+        currentIndex = 0;
+        inSubmenu = true;
         updateSelection();
-      } else if (e.key === 'ArrowUp') {
-        currentIndex = (currentIndex - 1 + items.length) % items.length;
-        updateSelection();
-      } else if (e.key === 'Enter') {
-        const selectedText = items[currentIndex].textContent;
-        if (!inSubmenu && (selectedText === 'Сообщения' || selectedText === 'Чит-коды')) {
-          currentSection = selectedText;
-          showSubmenu(currentSection);
-          mainMenu.style.display = 'none';
-          submenu.style.display = 'flex';
-          currentIndex = 0;
-          inSubmenu = true;
-          updateSelection();
-        } else if (inSubmenu) {
-          alert(`Вызов: ${selectedText}`);
-        } else {
-          alert(`Открыт раздел: ${selectedText}`);
-        }
-      } else if (e.key === 'Backspace' || e.key === 'Escape') {
-        if (inSubmenu) {
-          submenu.style.display = 'none';
-          mainMenu.style.display = 'flex';
-          currentIndex = 0;
-          inSubmenu = false;
-          updateSelection();
-        }
+      } else if (inSubmenu) {
+        alert(`Вызов: ${selectedText}`);
+      } else {
+        alert(`Открыт раздел: ${selectedText}`);
       }
+    }
+
+    function backAction() {
+      if (inSubmenu) {
+        submenu.style.display = 'none';
+        mainMenu.style.display = 'flex';
+        currentIndex = 0;
+        inSubmenu = false;
+        updateSelection();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') navigateDown();
+      else if (e.key === 'ArrowUp') navigateUp();
+      else if (e.key === 'Enter') enterAction();
+      else if (e.key === 'Backspace' || e.key === 'Escape') backAction();
     });
+
+    document.getElementById('key-up').addEventListener('click', navigateUp);
+    document.getElementById('key-down').addEventListener('click', navigateDown);
+    document.getElementById('key-enter').addEventListener('click', enterAction);
+    document.getElementById('key-back').addEventListener('click', backAction);
 
     updateSelection();
   </script>
